@@ -1,8 +1,10 @@
 package main
 
-import "github.com/horitaku/parakeet/internal/server"
+import (
+	"github.com/horitaku/parakeet/internal/server"
+)
 
-// start Golang backend server/service
+// run server
 func main() {
-	server.Start()
+	server.Run()
 }
