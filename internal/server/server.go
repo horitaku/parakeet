@@ -3,19 +3,28 @@ package server
 import (
 	"context"
 	"errors"
-	"github.com/gin-contrib/static"
-	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/gin-contrib/static"
+	"github.com/gin-gonic/gin"
 )
 
-func Start() {
+func Run() {
 
 	router := gin.Default()
+
+	// apis
+	api := router.Group("/api")
+	api.GET("/ping", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "pong",
+		})
+	})
 
 	// serve static files
 	router.Use(static.Serve("/", static.LocalFile("./build", true)))
@@ -24,7 +33,7 @@ func Start() {
 	})
 
 	server := &http.Server{
-		Addr:         "0.0.0.0:8088",
+		Addr:         "0.0.0.0:8080",
 		Handler:      router,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
