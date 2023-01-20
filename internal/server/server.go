@@ -16,12 +16,35 @@ import (
 
 func Run() {
 
+	// 
+	server := &http.Server{
+		Addr:         "0.0.0.0:8080",
+		Handler:      Router(),
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
+	// start server
+	go Start(server)
+	// go func() {
+	// 	if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+	// 		log.Fatalln(err)
+	// 	}
+	// }()
+
+	// graceful shutdown
+	GracefulShutdown(server)
+
+}
+
+func Router() *gin.Engine {
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 
-	// apis
+	// api route
 	api := router.Group("/api")
 	api.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"message": "pong",
 		})
 	})
@@ -31,22 +54,18 @@ func Run() {
 	router.NoRoute(func(c *gin.Context) { // fallback
 		c.File("./build/index.html")
 	})
+	return router
 
-	server := &http.Server{
-		Addr:         "0.0.0.0:8080",
-		Handler:      router,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+}
+
+func Start(server *http.Server) {
+	if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+		log.Fatalln(err)
 	}
+}
 
-	// start server
-	go func() {
-		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalln(err)
-		}
-	}()
 
-	// graceful shutdown
+func Shutdown(server *http.Server) {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
@@ -58,5 +77,4 @@ func Run() {
 		log.Fatalln(err)
 	}
 	log.Println("Server exiting")
-
 }
